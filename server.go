@@ -19,8 +19,8 @@ type Pitank struct {
 	//CommandChan
 }
 
-return &Pitank{
-	func NewPitank(name string) *Pitank {
+func NewPitank(name string) *Pitank {
+	return &Pitank{
 		Name:             name,
 		Status:           "connected",
 		LastRegistration: time.Now(),
