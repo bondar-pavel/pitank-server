@@ -99,7 +99,7 @@ func (p *PitankServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 	pitank := NewPitank(*name)
 	p.Tanks[*name] = pitank
 
-	// upgrate pitank connection to websocket
+	// upgrade connection to websocket
 	// to use it as bidirectional command channel
 	conn, err := p.wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
