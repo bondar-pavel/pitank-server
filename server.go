@@ -27,6 +27,10 @@ func NewPitank(name string) *Pitank {
 	}
 }
 
+func (p *Pitank) Deregister() {
+	p.LastDeregistration = time.Now()
+}
+
 // PitankServer configures webserver
 type PitankServer struct {
 	Port       string
@@ -96,10 +100,14 @@ func (p *PitankServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
-	// for now just do nothing and close connection
 	defer conn.Close()
+	defer pitank.Deregister()
 
-	pitank.LastDeregistration = time.Now()
+	err = conn.WriteJSON(pitank)
+	if err != nil {
+		fmt.Println("Error on websocker write:", err)
+		return
+	}
 }
 
 // getStringVar return pointer to value of the variable,
