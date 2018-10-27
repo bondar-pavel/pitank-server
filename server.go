@@ -10,13 +10,17 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type Command struct {
+	Command string `json:"command"`
+}
+
 // Pitank structure stores connected tank details
 type Pitank struct {
-	Name               string    `json:"name"`
-	Status             string    `json:"status"`
-	LastRegistration   time.Time `json:"last_registration"`
-	LastDeregistration time.Time `json:"last_deregistration"`
-	//CommandChan
+	Name               string        `json:"name"`
+	Status             string        `json:"status"`
+	LastRegistration   time.Time     `json:"last_registration"`
+	LastDeregistration time.Time     `json:"last_deregistration"`
+	CommandChan        chan *Command `json:"-"`
 }
 
 func NewPitank(name string) *Pitank {
@@ -24,11 +28,13 @@ func NewPitank(name string) *Pitank {
 		Name:             name,
 		Status:           "connected",
 		LastRegistration: time.Now(),
+		CommandChan:      make(chan *Command, 0),
 	}
 }
 
 func (p *Pitank) Deregister() {
 	p.LastDeregistration = time.Now()
+	p.CommandChan = nil
 }
 
 // PitankServer configures webserver
@@ -103,10 +109,21 @@ func (p *PitankServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 	defer pitank.Deregister()
 
+	// send pitank info (for debug)
 	err = conn.WriteJSON(pitank)
 	if err != nil {
-		fmt.Println("Error on websocker write:", err)
+		fmt.Println("Error on websocket write:", err)
 		return
+	}
+
+	// send commands to pitank
+	for cmd := range pitank.CommandChan {
+		fmt.Println("CMD:", cmd)
+		err = conn.WriteJSON(cmd)
+		if err != nil {
+			fmt.Println("Error on websocket write:", err)
+			return
+		}
 	}
 }
 
