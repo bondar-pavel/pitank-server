@@ -32,7 +32,7 @@ func NewPitankServer(port string) *PitankServer {
 func (p *PitankServer) Serve() {
 	p.wsUpgrader = websocket.Upgrader{}
 
-	r := mux.NewRouter()
+	r := mux.NewRouter().StrictSlash(true)
 
 	r.HandleFunc("/api/tanks", p.listTanks).Methods("GET")
 	r.HandleFunc("/api/tanks/{id}", p.getTank).Methods("GET")
@@ -42,6 +42,8 @@ func (p *PitankServer) Serve() {
 	r.HandleFunc("/api/connect/{name}", p.handleConnect).Methods("GET")
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+
+	r.HandleFunc("/", redirectToStatic).Methods("GET")
 
 	fmt.Println("Starting server on port", p.Port)
 	err := http.ListenAndServe(":"+p.Port, r)
@@ -172,4 +174,9 @@ func getStringVar(r *http.Request, varName string) (value *string) {
 		value = &val
 	}
 	return
+}
+
+// redirectToStatic redirects to static html landing page
+func redirectToStatic(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/static/index.html", http.StatusFound)
 }
