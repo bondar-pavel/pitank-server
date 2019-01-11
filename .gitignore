@@ -1,5 +1,6 @@
 # Binaries for programs and plugins
 pitank_server
+vendor/
 *.exe
 *.exe~
 *.dll
