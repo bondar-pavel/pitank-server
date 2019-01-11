@@ -172,6 +172,8 @@ func (p *PitankServer) Serve() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/tanks", p.listTanks).Methods("GET")
+	r.HandleFunc("/api/tanks/{id}", p.getTank).Methods("GET")
+
 	r.HandleFunc("/api/connect", p.handleConnect).Methods("GET")
 	r.HandleFunc("/api/connect/{name}", p.handleConnect).Methods("GET")
 
@@ -192,6 +194,28 @@ func (p *PitankServer) listTanks(w http.ResponseWriter, r *http.Request) {
 
 	enc := json.NewEncoder(w)
 	err := enc.Encode(tanks)
+	if err != nil {
+		http.Error(w, "Can't encode message:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// getTank returns single tank by id
+func (p *PitankServer) getTank(w http.ResponseWriter, r *http.Request) {
+	id := getStringVar(r, "id")
+	if id == nil {
+		http.Error(w, "id is not passed", http.StatusBadRequest)
+		return
+	}
+
+	tank, exist := p.Tanks[*id]
+	if !exist {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	enc := json.NewEncoder(w)
+	err := enc.Encode(tank)
 	if err != nil {
 		http.Error(w, "Can't encode message:"+err.Error(), http.StatusInternalServerError)
 		return
