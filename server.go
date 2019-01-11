@@ -28,6 +28,11 @@ const (
 	commandQueueSize = 5
 )
 
+// Command represents typical command from client to tank
+type Command struct {
+	Outputs string `json:"outputs"`
+}
+
 // Pitank structure stores connected tank details
 type Pitank struct {
 	Name               string    `json:"name"`
@@ -173,6 +178,7 @@ func (p *PitankServer) Serve() {
 
 	r.HandleFunc("/api/tanks", p.listTanks).Methods("GET")
 	r.HandleFunc("/api/tanks/{id}", p.getTank).Methods("GET")
+	r.HandleFunc("/api/tanks/{id}/connect", p.getTankConnection).Methods("GET")
 
 	r.HandleFunc("/api/connect", p.handleConnect).Methods("GET")
 	r.HandleFunc("/api/connect/{name}", p.handleConnect).Methods("GET")
@@ -219,6 +225,47 @@ func (p *PitankServer) getTank(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Can't encode message:"+err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+// getTankConnection establishes websocket connection to the tank
+func (p *PitankServer) getTankConnection(w http.ResponseWriter, r *http.Request) {
+	id := getStringVar(r, "id")
+	if id == nil {
+		http.Error(w, "id is not passed", http.StatusBadRequest)
+		return
+	}
+
+	tank, exist := p.Tanks[*id]
+	if !exist {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	// upgrade connection to websocket
+	// to use it as bidirectional command channel
+	conn, err := p.wsUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for {
+		_, data, err := conn.ReadMessage()
+		if err != nil {
+			msg := "Error on read: " + err.Error()
+			fmt.Println(msg)
+			return
+		}
+
+		var c Command
+		err = json.Unmarshal(data, &c)
+		if err != nil {
+			fmt.Println("Error on command unmarshal:", err.Error())
+			continue
+		}
+		fmt.Println("Sending command", c, "to tank", tank.Name)
+		tank.SendCommand(c)
 	}
 }
 
