@@ -1,0 +1,53 @@
+.arrow {
+	width: 44px;
+	height: 44px;
+	cursor: pointer;
+}
+
+.engine_left.active {
+	background: url(/static/arrows/orange-left.png);
+}
+
+.engine_forward.active {
+	background: url(/static/arrows/orange-up.png);
+}
+
+.engine_reverse.active {
+	background: url(/static/arrows/orange-down.png);
+}
+
+.engine_right.active {
+	background: url(/static/arrows/orange-right.png);
+}
+
+.engine_left.inactive {
+	background: url(/static/arrows/grey-left.png);
+}
+
+.engine_forward.inactive {
+	background: url(/static/arrows/grey-up.png);
+}
+
+.engine_reverse.inactive {
+	background: url(/static/arrows/grey-down.png);
+}
+
+.engine_right.inactive {
+	background: url(/static/arrows/grey-right.png);
+}
+
+.tower_left.active {
+	background: url(/static/arrows/green-left.png);
+}
+
+.tower_right.active {
+	background: url(/static/arrows/green-right.png);
+}
+
+.tower_left.inactive {
+	background: url(/static/arrows/blue-left.png);
+}
+
+.tower_right.inactive {
+	background: url(/static/arrows/blue-right.png);
+}

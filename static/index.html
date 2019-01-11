@@ -1,0 +1,247 @@
+<!--Original version is borrowed from https://github.com/dotdoom/rpi-tank-rack/-->
+<html>
+	<head>
+		<title>Raspberry PI Tank Control</title>
+		<link rel="stylesheet" type="text/css" href="/static/arrows.css">
+		<style>
+			.centered { text-align: center }
+		</style>
+	</head>
+	<body style="font-family: monospace">
+		<p>Client IP: <%= source_ip %>.</p>
+		<p><%= notice %></p>
+		<div id='warning' style='color: red'></div>
+
+		<div>
+			<a href="/?res=960x720">960x720</a> |
+			<a href="/?res=640x480">640x480</a> |
+			<a href="/?res=320x240">320x240</a> |
+			<a href="/?res=stop">stop video stream</a> 
+		</div>
+		<br/>
+
+		<div style="float: left; padding: 10px">
+			<img src='http://<%= request_host %>:8280/?action=stream'>
+		</div>
+		<div style="float: left">
+			<table id='controls'>
+				<tr>
+					<td>
+						<div id='tower_left' class="arrow tower_left inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+					<td><p class='centered'>tower</p></td>
+					<td>
+						<div id='tower_right' class="arrow tower_right inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+				</tr>
+				<!-- Classic View -->
+				<tr name='engine-classic'>
+					<td/>
+					<td>
+						<div id='engine_forward' class="arrow engine_forward inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+				</tr>
+				<tr name='engine-classic'>
+					<td>
+						<div id='engine_left' class="arrow engine_left inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+					<td/>
+					<td>
+						<div id='engine_right' class="arrow engine_right inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+				</tr>
+				<tr name='engine-classic'>
+					<td/>
+					<td>
+						<div id='engine_reverse' class="arrow engine_reverse inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+				</tr>
+				<tr name='engine-classic'>
+					<td colspan='3'>
+						<p class='centered'>Classic View</p>
+						<button onclick="view(true)">Switch to Tank View</button>
+					</td>
+				</tr>
+				<!-- Tank View -->
+				<tr name='engine-tank'>
+					<td>
+						<div id='trackleft_forward' class="arrow engine_forward inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+					<td/>
+					<td>
+						<div id='trackright_forward' class="arrow engine_forward inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+				</tr>
+				<tr name='engine-tank'>
+					<td>
+						<div id='trackleft_reverse' class="arrow engine_reverse inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+					<td/>
+					<td>
+						<div id='trackright_reverse' class="arrow engine_reverse inactive" onmousedown="button(this, true)" onmouseup="button(this, false)"></div>
+					</td>
+				</tr>
+				<tr name='engine-tank'>
+					<td colspan='3'>
+						<p class='centered'>Tank View</p>
+						<button onclick="view(false)">Switch to Classic View</button>
+					</td>
+				</tr>
+				<tr>
+					<td colspan='3'>
+						<button onclick="view('program')">Switch to Program View</button>
+					</td>
+				</tr>
+			</table>
+			<form id='program' method='POST' action='/' style='display: none'>
+				Programming RPI-TANK<br/>
+				<textarea name='program' rows='25' cols='80'>
+reset
+track_left.direction = :forward
+sleep 5
+track_left.direction = nil
+track_right.direction = :reverse
+tower.direction = :left # aka counter-clockwise
+sleep 5
+reset</textarea><br/>
+				<input type='submit' value='Run' />
+			</form>
+		</div>
+
+		<script type="text/javascript">
+			document.onkeydown = function(e) { key(e.keyCode, true); }
+			document.onkeyup = function(e) { key(e.keyCode, false); }
+
+			// WebSocket connection to the server.
+			var socket = null;
+			// Currently pushed buttons.
+			var actions = [];
+			// Flag not to flood server with 'stop'.
+			var stopped = true;
+			// Flag to indicate program mode (no return).
+			var program = false;
+			// Send 'actions' to 'socket', with reconnect availability.
+			function send_actions() {
+				if (socket) {
+					var stop_now = actions.length == 0;
+					if (!(stop_now && stopped)) {
+						socket.send(stop_now ? 'stop' : actions.join(' '));
+					}
+					stopped = stop_now;
+				} else {
+					warn('connecting')
+					socket = new WebSocket('ws://<%= request_host_with_port %>/controls');
+
+					socket.onopen = function(e) {
+						warn(null);
+						console.log('WebSocket: opened');
+						send_actions();
+					}
+					socket.onclose = function(e) {
+						socket = null;
+						warn('WebSocket: closed (' + e.code + ')');
+					}
+					socket.onmessage = function(e) {
+						console.log('WebSocket: message ' + e.data);
+					}
+					socket.onerror = function(e) {
+						warn('WebSocket: error');
+					}
+				}
+
+			}
+
+			function view(tank) {
+				var tank_elements = document.getElementsByName('engine-tank');
+				var classic_elements = document.getElementsByName('engine-classic');
+
+				if (tank === 'program') {
+					program = true;
+					document.getElementById('controls').style.display = 'none';
+					document.getElementById('program').style.display = '';
+				} else {
+					for (var i = 0; i < tank_elements.length; ++i) {
+						tank_elements[i].style.display = tank ? '' : 'none';
+					}
+					for (var i = 0; i < classic_elements.length; ++i) {
+						classic_elements[i].style.display = tank ? 'none' : '';
+					}
+				}
+			}
+
+			view(false);
+
+			setInterval(function() {
+					send_actions(actions);
+				}, 500);
+
+			function warn(text) {
+				document.getElementById('warning').innerText = text;
+			}
+
+			function go(action, enabled) {
+				var button = document.getElementById(action);
+				button.className = button.className.replace(enabled ? ' inactive' : ' active',
+				                                            enabled ? ' active' : ' inactive');
+
+				if (enabled && action.indexOf('track') >= 0) {
+					view(true);
+				} else if (enabled && action.indexOf('engine') >= 0) {
+					view(false);
+				}
+
+				for (var i = 0; i < actions.length; ++i) {
+					if (actions[i] == action) {
+						if (enabled) {
+							var found = true;
+						} else {
+							actions.splice(i, 1);
+							send_actions();
+						}
+						break;
+					}
+				}
+				if (enabled && !found) {
+					actions.push(action);
+					send_actions();
+				}
+
+				return false;
+			}
+
+			var key_action_mapping = {
+				37: 'engine_left',
+				38: 'engine_forward',
+				39: 'engine_right',
+				40: 'engine_reverse',
+				87: 'engine_forward',
+				83: 'engine_reverse',
+				65: 'engine_left',
+				68: 'engine_right',
+				81: 'trackleft_forward',
+				69: 'trackright_forward',
+				90: 'trackleft_reverse',
+				67: 'trackright_reverse',
+				219: 'tower_left',
+				221: 'tower_right'
+			};
+
+			function key(code, enabled) {
+				if (program) {
+					return true;
+				}
+				var action = key_action_mapping[code];
+				if (action) {
+					go(action, enabled);
+					return false;
+				}
+				return true;
+			}
+
+			function button(btn, enabled) {
+				go(btn.id, enabled);
+			}
+		</script>
+	</body>
+</html>
+

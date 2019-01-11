@@ -41,6 +41,8 @@ func (p *PitankServer) Serve() {
 	r.HandleFunc("/api/connect", p.handleConnect).Methods("GET")
 	r.HandleFunc("/api/connect/{name}", p.handleConnect).Methods("GET")
 
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+
 	fmt.Println("Starting server on port", p.Port)
 	err := http.ListenAndServe(":"+p.Port, r)
 	if err != nil {
