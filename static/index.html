@@ -112,12 +112,12 @@ reset</textarea><br/>
 				if (socket) {
 					var stop_now = actions.length == 0;
 					if (!(stop_now && stopped)) {
-						socket.send(stop_now ? 'stop' : actions.join(' '));
+						socket.send(stop_now ? '{"outputs": "stop"}' : '{"outputs": "' + actions.join(' ') + '"}');
 					}
 					stopped = stop_now;
 				} else {
 					warn('connecting')
-					socket = new WebSocket('ws://<%= request_host_with_port %>/controls');
+					socket = new WebSocket('ws://' + location.host + '/api/tanks/pitank/connect');
 
 					socket.onopen = function(e) {
 						warn(null);
