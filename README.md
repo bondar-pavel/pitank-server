@@ -2,17 +2,17 @@
 
 Golang webserver for controlling and monitoring multiple pitanks.
 
-This is Work-In-Progress project and far from being complete.
+This is Work-In-Progress project and it is far from being complete.
 
 ## Build Project
 
-To build project run, it will product `pitank_server` binary:
+To build project run:
 
 ```
 make build
 ```
 
-`pitank_server` by default start on port 8080:
+It produces `pitank_server` binary. By default server starts on port 8080:
 
 ```
 $ ./pitank_server -h
@@ -64,7 +64,7 @@ Example:
 
 Open Websocket from client to webserver. Used to send control commands to tank.
 
-Example of data to send into WS from client:
+Example of data to be sent into WS from client:
 
 ```
 {"outputs": "12,14,16"}
