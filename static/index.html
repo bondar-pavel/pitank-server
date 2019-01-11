@@ -8,21 +8,8 @@
 		</style>
 	</head>
 	<body style="font-family: monospace">
-		<p>Client IP: <%= source_ip %>.</p>
-		<p><%= notice %></p>
 		<div id='warning' style='color: red'></div>
 
-		<div>
-			<a href="/?res=960x720">960x720</a> |
-			<a href="/?res=640x480">640x480</a> |
-			<a href="/?res=320x240">320x240</a> |
-			<a href="/?res=stop">stop video stream</a> 
-		</div>
-		<br/>
-
-		<div style="float: left; padding: 10px">
-			<img src='http://<%= request_host %>:8280/?action=stream'>
-		</div>
 		<div style="float: left">
 			<table id='controls'>
 				<tr>
