@@ -67,7 +67,7 @@ Open Websocket from client to webserver. Used to send control commands to tank.
 Example of data to be sent into WS from client:
 
 ```
-{"outputs": "12,14,16"}
+{"commands": "stop"}
 ```
 
 ### WS /api/connect/{name}
@@ -77,5 +77,5 @@ Open Websocket from tank to webserver. Used to receive commands to tank.
 Example of data received by tank from server:
 
 ```
-{"outputs": "12,14,16"}
+{"commands": "engine_right engine_forward tower_right"}
 ```

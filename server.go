@@ -11,7 +11,7 @@ import (
 
 // Command represents typical command from client to tank
 type Command struct {
-	Outputs string `json:"outputs"`
+	Commands string `json:"commands"`
 }
 
 // PitankServer configures webserver

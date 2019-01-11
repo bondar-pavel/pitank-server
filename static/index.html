@@ -112,7 +112,7 @@ reset</textarea><br/>
 				if (socket) {
 					var stop_now = actions.length == 0;
 					if (!(stop_now && stopped)) {
-						socket.send(stop_now ? '{"outputs": "stop"}' : '{"outputs": "' + actions.join(' ') + '"}');
+						socket.send(stop_now ? '{"commands": "stop"}' : '{"commands": "' + actions.join(',') + '"}');
 					}
 					stopped = stop_now;
 				} else {
