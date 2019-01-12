@@ -107,12 +107,43 @@ reset</textarea><br/>
 			var stopped = true;
 			// Flag to indicate program mode (no return).
 			var program = false;
+
+			var action_to_track = {
+				'engine_forward': ['trackright_forward', 'trackleft_forward'],
+				'engine_right': ['trackleft_forward'],
+				'engine_left': ['trackright_forward'],
+				'engine_reverse': ['trackleft_reverse', 'trackright_reverse'],
+			}
+			// Converts list of actions to command for the server
+			function get_commands(actions) {
+				if (actions.length == 0) {
+					return {commands: "stop"};
+				}
+
+				// use dict for commands to make sure each command appears only once
+				let commands = {};
+				for (var i = 0; i < actions.length; ++i) {
+					let cmd = action_to_track[actions[i]];
+					console.log("Processing", actions[i], cmd);
+					if (cmd) {
+						console.log("right", cmd);
+						for (var j = 0; j < cmd.length; ++j) {
+							commands[cmd[j]] = true;
+						}
+					} else {
+						console.log("wrong", actions[i]);
+						commands[actions[i]] = true;
+					}
+				}
+				console.log("Commands:", commands);
+				return {commands: Object.keys(commands).join(',')};
+			}
 			// Send 'actions' to 'socket', with reconnect availability.
 			function send_actions() {
 				if (socket) {
 					var stop_now = actions.length == 0;
 					if (!(stop_now && stopped)) {
-						socket.send(stop_now ? '{"commands": "stop"}' : '{"commands": "' + actions.join(',') + '"}');
+						socket.send(JSON.stringify(get_commands(actions)));
 					}
 					stopped = stop_now;
 				} else {
