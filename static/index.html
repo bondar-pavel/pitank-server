@@ -112,6 +112,9 @@ reset</textarea><br/>
 			// Flag to indicate program mode (no return).
 			var program = false;
 
+			const urlParams = new URLSearchParams(window.location.search);
+			const tankName = urlParams.get('name') || 'pitank';
+
 			var action_to_track = {
 				'engine_forward': ['trackright_forward', 'trackleft_forward'],
 				'engine_right': ['trackleft_forward'],
@@ -152,7 +155,7 @@ reset</textarea><br/>
 					stopped = stop_now;
 				} else {
 					warn('connecting')
-					socket = new WebSocket('ws://' + location.host + '/api/tanks/pitank/connect');
+					socket = new WebSocket('ws://' + location.host + '/api/tanks/' + tankName + '/connect');
 
 					socket.onopen = function(e) {
 						warn(null);
