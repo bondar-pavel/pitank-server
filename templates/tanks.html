@@ -1,0 +1,24 @@
+<html>
+	<head>
+		<title>Raspberry PI Tank Control Center</title>
+	</head>
+	<body>
+		<h1>Registered tanks:<h1>
+		<table border="1">
+			<tr>
+				<td>Name</td>
+				<td>Status</td>
+				<td>Connected at</td>
+				<td>Disconnected at</td>
+			</tr>
+		{{range .}}
+			<tr>
+				<td><a href="/static/control.html?name={{.Name}}">{{.Name}}</a></td>
+				<td>{{.Status}}</td>
+				<td>{{.LastRegistration}}</td>
+				<td>{{.LastDeregistration}}</td>
+			</tr>
+		{{end}}
+		</table>
+	</body>
+</html>

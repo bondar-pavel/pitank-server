@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/alecthomas/template"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -44,7 +45,7 @@ func (p *PitankServer) Serve() {
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
-	r.HandleFunc("/", redirectToStatic).Methods("GET")
+	r.HandleFunc("/", p.renderTanks).Methods("GET")
 
 	fmt.Println("Starting server on port", p.Port)
 	err := http.ListenAndServe(":"+p.Port, r)
@@ -52,6 +53,20 @@ func (p *PitankServer) Serve() {
 		fmt.Println("Error on starting server:", err)
 		return
 	}
+}
+
+func (p *PitankServer) renderTanks(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("./templates/tanks.html")
+	if err != nil {
+		http.Error(w, "Can not parse template", http.StatusInternalServerError)
+		return
+	}
+
+	tanks := make([]*Pitank, 0)
+	for _, tank := range p.Tanks {
+		tanks = append(tanks, tank)
+	}
+	tmpl.Execute(w, tanks)
 }
 
 // listTanks returns list of connected tanks
