@@ -117,7 +117,19 @@ func (p *PitankServer) getTankConnection(w http.ResponseWriter, r *http.Request)
 	go func() {
 		ticker := time.NewTicker(time.Second)
 		for t := range ticker.C {
-			msg := fmt.Sprintf("Tick at %s", t)
+			tank, ok := p.Tanks[*id]
+			if !ok {
+				fmt.Println("Tank no longer exits, exiting")
+				ticker.Stop()
+				return
+			}
+			var diff time.Duration
+			if tank.Status == "connected" {
+				diff = t.Sub(tank.LastRegistration)
+			} else {
+				diff = t.Sub(tank.LastDeregistration)
+			}
+			msg := fmt.Sprintf("status %s, for %s", tank.Status, diff)
 			err := conn.WriteMessage(1, []byte(msg))
 			if err != nil {
 				fmt.Println("Error on ws write, exiting")
