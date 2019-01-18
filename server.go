@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -111,6 +112,20 @@ func (p *PitankServer) getTankConnection(w http.ResponseWriter, r *http.Request)
 		fmt.Println(err)
 		return
 	}
+	defer conn.Close()
+
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		for t := range ticker.C {
+			msg := fmt.Sprintf("Tick at %s", t)
+			err := conn.WriteMessage(1, []byte(msg))
+			if err != nil {
+				fmt.Println("Error on ws write, exiting")
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 
 	for {
 		_, data, err := conn.ReadMessage()

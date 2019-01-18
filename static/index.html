@@ -168,6 +168,7 @@ reset</textarea><br/>
 					}
 					socket.onmessage = function(e) {
 						console.log('WebSocket: message ' + e.data);
+						warn('WebSocket: message ' + e.data);
 					}
 					socket.onerror = function(e) {
 						warn('WebSocket: error');
