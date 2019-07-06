@@ -4,7 +4,26 @@ Golang webserver for controlling and monitoring multiple pitanks.
 
 This is Work-In-Progress project and it is far from being complete.
 
-## Build Project
+## Build Docker image with project
+
+To build Docker image with binary, static files and templates run: 
+
+```
+make image
+```
+
+To start newly build image run script:
+
+```
+./restart_pitank_server.sh
+```
+
+It will start pitank_server on port 80, to test if it works, opend in browser:
+```
+http://localhost/
+```
+
+## Build Project Locally
 
 To build project run:
 
