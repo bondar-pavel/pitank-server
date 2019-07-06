@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME=pitank_server
+IMAGE_NAME=pitank-server
 VERSION=0.1.0
 
 docker rm -f ${IMAGE_NAME}
