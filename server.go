@@ -3,10 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"time"
 
-	"github.com/alecthomas/template"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
