@@ -98,3 +98,32 @@ Example of data received by tank from server:
 ```
 {"commands": "engine_right engine_forward tower_right"}
 ```
+
+## Improvement Proposal 1: Use WebRTS for client-tank communication
+
+Currently both client and tank are connected via Websocket to the server,
+and server forwards commands from Client to Tank.
+So data flow looks next:
+Client -> Server -> Tank
+
+In case if Client and Tank are located in the same area, but server is on another continent
+we can get significant delay.
+
+To improve latency in this case we can use WebRTC protocol to establish direct data channel between
+Client and Tank, and Server will act as inremediary only during handshake stage.
+In this case latency can be significantly reduced especially in case if Client and Tank are in the same location.
+
+Proposed WebRTC flow:
+1. Tank connects to the server over websocket
+2. Tank create WebRTC offer
+3. Tank send offer to WebSocket
+4. Server assotiates offer with Tank
+5. Client selects tank in UI
+6. Client gets tank offer
+7. Client generates answer for this offer
+8. Client answer is sent to Websocket
+9. Server forwards answer to tank
+10. Tank accepts the answer
+11. Webrtc connection is started
+12. Client can send commands directly to tank over WebRTC channel
+13. If WebRTC channel failed, then fallback to Websocket
