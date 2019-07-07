@@ -20,7 +20,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	maxMessageSize = 2048
 
 	// Command Queue size.
 	commandQueueSize = 5
@@ -35,6 +35,7 @@ type Pitank struct {
 	commandChan        chan interface{}
 	ReplyChan          chan interface{}
 	conn               *websocket.Conn
+	Offer              string
 }
 
 func NewPitank(name string) *Pitank {
@@ -128,6 +129,11 @@ func (p *Pitank) processTankReply(cmd Command) {
 	if p.ReplyChan == nil {
 		fmt.Println("Error! Command channel is closed!")
 		return
+	}
+
+	// Handle updating offer without sending to client
+	if cmd.Offer != "" {
+		p.Offer = cmd.Offer
 	}
 
 	// Use non-blocking write to reply channel to prevent hanging up

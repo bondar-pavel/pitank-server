@@ -14,6 +14,7 @@ import (
 // Command represents typical command from client to tank
 type Command struct {
 	Commands string `json:"commands"`
+	Offer    string `json:"offer,omitempty"`
 	Time     int64  `json:"time,omitempty"`
 }
 
