@@ -10,6 +10,7 @@
 	<body style="font-family: monospace">
 		<div><a href="/"><< Back</a></div><br>
 
+		<div id='info' style='color: green'></div>
 		<div id='warning' style='color: red'></div>
 		<div style="float: left; padding: 10px">
 			<img id='video'>
@@ -145,7 +146,10 @@ reset</textarea><br/>
 					}
 				}
 				console.log("Commands:", commands);
-				return {commands: Object.keys(commands).join(',')};
+				return {
+					commands: Object.keys(commands).join(','),
+					time: Date.now()
+				};
 			}
 			// Send 'actions' to 'socket', with reconnect availability.
 			function send_actions() {
@@ -169,8 +173,17 @@ reset</textarea><br/>
 						warn('WebSocket: closed (' + e.code + ')');
 					}
 					socket.onmessage = function(e) {
-						console.log('WebSocket: message ' + e.data);
-						warn('WebSocket: message ' + e.data);
+						try {
+							var data = JSON.parse(e.data);
+							if (data.time) {
+								latency = Date.now() - data.time;
+								console.log('Round trip time ' + latency + " ms");
+								info('Round trip time ' + latency + " ms");
+							}
+						} catch(err) {
+							console.log('WebSocket: message ' + e.data);
+							warn('WebSocket: message ' + e.data);
+						}
 					}
 					socket.onerror = function(e) {
 						warn('WebSocket: error');
@@ -205,6 +218,9 @@ reset</textarea><br/>
 
 			function warn(text) {
 				document.getElementById('warning').innerText = text;
+			}
+			function info(text) {
+				document.getElementById('info').innerText = text;
 			}
 
 			function go(action, enabled) {

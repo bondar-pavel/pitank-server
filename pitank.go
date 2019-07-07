@@ -33,6 +33,7 @@ type Pitank struct {
 	LastRegistration   time.Time `json:"last_registration"`
 	LastDeregistration time.Time `json:"last_deregistration"`
 	commandChan        chan interface{}
+	ReplyChan          chan interface{}
 	conn               *websocket.Conn
 }
 
@@ -56,6 +57,7 @@ func (p *Pitank) SendCommand(cmd interface{}) {
 func (p *Pitank) Connect(conn *websocket.Conn) {
 	p.conn = conn
 	p.commandChan = make(chan interface{}, commandQueueSize)
+	p.ReplyChan = make(chan interface{}, commandQueueSize)
 
 	p.Status = "connected"
 	p.LastRegistration = time.Now()
@@ -99,17 +101,45 @@ func (p *Pitank) ReadPump() {
 	//p.conn.SetReadDeadline(time.Now().Add(pongWait))
 
 	for {
-		_, _, err := p.conn.ReadMessage()
+		mt, message, err := p.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
 			break
 		}
+
+		// try to decode only text messages
+		if mt != websocket.TextMessage {
+			continue
+		}
+
+		var cmd Command
+		err = json.Unmarshal(message, &cmd)
+		if err != nil {
+			fmt.Println("Error on unmarshal:", err.Error())
+			continue
+		}
+		p.processTankReply(cmd)
 	}
 }
 
-// WritePump pumps commands for queue to websocket
+func (p *Pitank) processTankReply(cmd Command) {
+	if p.ReplyChan == nil {
+		fmt.Println("Error! Command channel is closed!")
+		return
+	}
+
+	// Use non-blocking write to reply channel to prevent hanging up
+	// if no one is reading
+	select {
+	case p.ReplyChan <- cmd:
+	default:
+		fmt.Println("Reply channgel is overloaded, skipping command:", cmd)
+	}
+}
+
+// WritePump pumps commands from queue to websocket
 func (p *Pitank) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {

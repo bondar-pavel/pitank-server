@@ -14,6 +14,7 @@ import (
 // Command represents typical command from client to tank
 type Command struct {
 	Commands string `json:"commands"`
+	Time     int64  `json:"time,omitempty"`
 }
 
 // PitankServer configures webserver
@@ -131,25 +132,42 @@ func (p *PitankServer) getTankConnection(w http.ResponseWriter, r *http.Request)
 
 	go func() {
 		ticker := time.NewTicker(time.Second)
-		for t := range ticker.C {
-			tank, ok := p.Tanks[*id]
-			if !ok {
-				fmt.Println("Tank no longer exits, exiting")
-				ticker.Stop()
-				return
-			}
-			var diff time.Duration
-			if tank.Status == "connected" {
-				diff = t.Sub(tank.LastRegistration)
-			} else {
-				diff = t.Sub(tank.LastDeregistration)
-			}
-			msg := fmt.Sprintf("status %s, for %s", tank.Status, diff)
-			err := conn.WriteMessage(1, []byte(msg))
-			if err != nil {
-				fmt.Println("Error on ws write, exiting")
-				ticker.Stop()
-				return
+		for {
+			select {
+			case cmd, ok := <-tank.ReplyChan:
+				if !ok {
+					// Reply channel is closed, terminate connection
+					ticker.Stop()
+					conn.WriteMessage(websocket.CloseMessage, []byte{})
+					return
+				}
+				err := conn.WriteJSON(cmd)
+				if err != nil {
+					fmt.Println("Error on ws write, exiting")
+					ticker.Stop()
+					return
+				}
+			case t := <-ticker.C:
+				ok := false
+				tank, ok = p.Tanks[*id]
+				if !ok {
+					fmt.Println("Tank no longer exits, exiting")
+					ticker.Stop()
+					return
+				}
+				var diff time.Duration
+				if tank.Status == "connected" {
+					diff = t.Sub(tank.LastRegistration)
+				} else {
+					diff = t.Sub(tank.LastDeregistration)
+				}
+				msg := fmt.Sprintf("status %s, for %s", tank.Status, diff)
+				err := conn.WriteMessage(1, []byte(msg))
+				if err != nil {
+					fmt.Println("Error on ws write, exiting")
+					ticker.Stop()
+					return
+				}
 			}
 		}
 	}()
@@ -201,7 +219,7 @@ func (p *PitankServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 	pitank.Connect(conn)
 
 	// send pitank info (for debug)
-	pitank.SendCommand(pitank)
+	//pitank.SendCommand(pitank)
 
 	// serve writes from command chan to websocket in gorouting
 	go pitank.WritePump()
