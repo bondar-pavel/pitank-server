@@ -114,6 +114,8 @@ reset</textarea><br/>
 			var stopped = true;
 			// Flag to indicate program mode (no return).
 			var program = false;
+			// LocalDescription for WebRTC connection
+			var localDescription = "";
 
 			const urlParams = new URLSearchParams(window.location.search);
 			const tankName = urlParams.get('name') || 'pitank';
@@ -124,6 +126,30 @@ reset</textarea><br/>
 				'engine_left': ['trackright_forward'],
 				'engine_reverse': ['trackleft_reverse', 'trackright_reverse'],
 			}
+
+			// Init WebRTC
+			let pc = new RTCPeerConnection({
+				iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
+			})
+
+			pc.onsignalingstatechange = e => warn(pc.signalingState)
+			pc.oniceconnectionstatechange = e => warn(pc.iceConnectionState)
+			pc.onicecandidate = event => {
+				if (event.candidate === null) {
+					localDescription = btoa(JSON.stringify(pc.localDescription))
+				}
+			}
+
+			pc.ondatachannel = e => {
+				let dc = e.channel
+				warn('New DataChannel ' + dc.label)
+				dc.onclose = () => console.log('dc has closed')
+				dc.onopen = () => console.log('dc has opened')
+				dc.onmessage = e => warn(`Message from DataChannel '${dc.label}' payload '${e.data}'`)
+
+				dc.send("Connection established!");
+			}
+
 			// Converts list of actions to command for the server
 			function get_commands(actions) {
 				if (actions.length == 0) {
@@ -167,6 +193,15 @@ reset</textarea><br/>
 						warn(null);
 						console.log('WebSocket: opened');
 						send_actions();
+
+						if (localDescription) {
+							console.log("Sending localDescription: " + localDescription);
+							socket.send(JSON.stringify({
+								offer: localDescription
+							}));
+						} else {
+							console.log("localDescription is not ready");
+						}
 					}
 					socket.onclose = function(e) {
 						socket = null;
@@ -180,6 +215,12 @@ reset</textarea><br/>
 								console.log('Round trip time ' + latency + " ms");
 								info('Round trip time ' + latency + " ms");
 							}
+							if (data.offer) {
+								// Initialize webrtc connection with remote offer
+								console.log("Received remote offer:" + offer);
+								pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(data.offer)))).catch(warn)
+								pc.createAnswer().then(d => pc.setLocalDescription(d)).catch(warn)
+							}
 						} catch(err) {
 							console.log('WebSocket: message ' + e.data);
 							warn('WebSocket: message ' + e.data);
@@ -189,7 +230,6 @@ reset</textarea><br/>
 						warn('WebSocket: error');
 					}
 				}
-
 			}
 
 			function view(tank) {
