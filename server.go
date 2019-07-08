@@ -15,6 +15,7 @@ import (
 type Command struct {
 	Commands string `json:"commands"`
 	Offer    string `json:"offer,omitempty"`
+	Answer   string `json:"answer,omitempty"`
 	Time     int64  `json:"time,omitempty"`
 }
 
@@ -40,7 +41,7 @@ func (p *PitankServer) Serve() {
 
 	r.HandleFunc("/api/tanks", p.listTanks).Methods("GET")
 	r.HandleFunc("/api/tanks/{id}", p.getTank).Methods("GET")
-	r.HandleFunc("/api/tanks/{id}/connect", p.getTankConnection).Methods("GET")
+	r.HandleFunc("/api/tanks/{id}/connect", p.clientToTanksWS).Methods("GET")
 
 	r.HandleFunc("/api/connect", p.handleConnect).Methods("GET")
 	r.HandleFunc("/api/connect/{name}", p.handleConnect).Methods("GET")
@@ -108,8 +109,8 @@ func (p *PitankServer) getTank(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getTankConnection establishes websocket connection to the tank
-func (p *PitankServer) getTankConnection(w http.ResponseWriter, r *http.Request) {
+// clientToTanksWS establishes websocket connection from the client to the tank (via server)
+func (p *PitankServer) clientToTanksWS(w http.ResponseWriter, r *http.Request) {
 	id := getStringVar(r, "id")
 	if id == nil {
 		http.Error(w, "id is not passed", http.StatusBadRequest)
@@ -132,6 +133,14 @@ func (p *PitankServer) getTankConnection(w http.ResponseWriter, r *http.Request)
 	defer conn.Close()
 
 	go func() {
+		// write offer to the channel on init
+		cmd := Command{Offer: tank.Offer}
+		err = conn.WriteJSON(cmd)
+		if err != nil {
+			fmt.Println("Error on sending tank info")
+			//return
+		}
+
 		ticker := time.NewTicker(time.Second)
 		for {
 			select {

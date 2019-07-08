@@ -10,6 +10,7 @@
 	<body style="font-family: monospace">
 		<div><a href="/"><< Back</a></div><br>
 
+		<div id='debug' style='color: green'></div>
 		<div id='info' style='color: green'></div>
 		<div id='warning' style='color: red'></div>
 		<div style="float: left; padding: 10px">
@@ -104,7 +105,7 @@ reset</textarea><br/>
 			document.onkeydown = function(e) { key(e.keyCode, true); }
 			document.onkeyup = function(e) { key(e.keyCode, false); }
 
-			document.getElementById('video').src = 'http://' + location.hostname + ':8280/?action=stream';
+			//document.getElementById('video').src = 'http://' + location.hostname + ':8280/?action=stream';
 
 			// WebSocket connection to the server.
 			var socket = null;
@@ -116,9 +117,12 @@ reset</textarea><br/>
 			var program = false;
 			// LocalDescription for WebRTC connection
 			var localDescription = "";
+			var localDescriptionSent = false;
 
 			const urlParams = new URLSearchParams(window.location.search);
 			const tankName = urlParams.get('name') || 'pitank';
+			//const offer = urlParams.get('offer');
+			//console.log("Tank offer: ", offer);
 
 			var action_to_track = {
 				'engine_forward': ['trackright_forward', 'trackleft_forward'],
@@ -135,7 +139,9 @@ reset</textarea><br/>
 			pc.onsignalingstatechange = e => warn(pc.signalingState)
 			pc.oniceconnectionstatechange = e => warn(pc.iceConnectionState)
 			pc.onicecandidate = event => {
+				warn("Generating localDescription");
 				if (event.candidate === null) {
+					warn("Generating localDescription done");
 					localDescription = btoa(JSON.stringify(pc.localDescription))
 				}
 			}
@@ -186,22 +192,14 @@ reset</textarea><br/>
 					}
 					stopped = stop_now;
 				} else {
-					warn('connecting')
+					warn('connecting...');
+					localDescriptionSent = false;
 					socket = new WebSocket('ws://' + location.host + '/api/tanks/' + tankName + '/connect');
 
 					socket.onopen = function(e) {
 						warn(null);
 						console.log('WebSocket: opened');
 						send_actions();
-
-						if (localDescription) {
-							console.log("Sending localDescription: " + localDescription);
-							socket.send(JSON.stringify({
-								offer: localDescription
-							}));
-						} else {
-							console.log("localDescription is not ready");
-						}
 					}
 					socket.onclose = function(e) {
 						socket = null;
@@ -222,8 +220,16 @@ reset</textarea><br/>
 								pc.createAnswer().then(d => pc.setLocalDescription(d)).catch(warn)
 							}
 						} catch(err) {
-							console.log('WebSocket: message ' + e.data);
-							warn('WebSocket: message ' + e.data);
+							debug('WebSocket: message ' + e.data);
+						}
+
+						// send localDescription if we have one
+						if (localDescription != "" && !localDescriptionSent) {
+							localDescriptionSent = true;
+							console.log("Sending localDescription: " + localDescription);
+							socket.send(JSON.stringify({
+								answer: localDescription
+							}));
 						}
 					}
 					socket.onerror = function(e) {
@@ -257,10 +263,16 @@ reset</textarea><br/>
 				}, 500);
 
 			function warn(text) {
+				console.log(text)
 				document.getElementById('warning').innerText = text;
 			}
+
 			function info(text) {
 				document.getElementById('info').innerText = text;
+			}
+
+			function debug(text) {
+				document.getElementById('debug').innerText = text;
 			}
 
 			function go(action, enabled) {

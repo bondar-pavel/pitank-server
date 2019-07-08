@@ -45,6 +45,14 @@ func NewPitank(name string) *Pitank {
 	}
 }
 
+func (p *Pitank) FormattedLastRegistration() string {
+	return p.LastRegistration.Format(time.RFC1123)
+}
+
+func (p *Pitank) FormattedLastDeregistration() string {
+	return p.LastDeregistration.Format(time.RFC1123)
+}
+
 func (p *Pitank) SendCommand(cmd interface{}) {
 	if p.commandChan == nil {
 		fmt.Println("Error! Command channel is closed!")
