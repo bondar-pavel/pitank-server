@@ -38,9 +38,20 @@ pc.onicecandidate = event => {
     warn("Generating localDescription");
     if (event.candidate === null) {
         warn("Generating localDescription done");
-        localDescription = btoa(JSON.stringify(pc.localDescription))
+        // send Offer to tank
+        fetch(`${window.location.origin}/api/tanks/${tankName}/offer`, {
+            method: 'POST',
+            body: btoa(JSON.stringify(pc.localDescription))
+        }).then(response => {
+            return response.text();
+        }).then(data => {
+            console.log("Returned answer: ", data);
+            pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(data))));
+        }).catch(warn);
     }
 }
+
+pc.onnegotiationneeded = e => pc.createOffer().then(d => pc.setLocalDescription(d)).catch(log);
 
 let send_actions_webrts;
 
@@ -134,12 +145,14 @@ function send_actions_websocket() {
                     console.log('Round trip time ' + latency + " ms");
                     info('Round trip time ' + latency + " ms");
                 }
+                /*
                 if (data.offer) {
                     // Initialize webrtc connection with remote offer
                     console.log("Received remote offer:" + offer);
                     pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(data.offer)))).catch(warn)
                     pc.createAnswer().then(d => pc.setLocalDescription(d)).catch(warn)
                 }
+                */
             } catch (err) {
                 debug('WebSocket: message ' + e.data);
             }

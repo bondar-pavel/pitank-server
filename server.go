@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -41,6 +42,7 @@ func (p *PitankServer) Serve() {
 
 	r.HandleFunc("/api/tanks", p.listTanks).Methods("GET")
 	r.HandleFunc("/api/tanks/{id}", p.getTank).Methods("GET")
+	r.HandleFunc("/api/tanks/{id}/offer", p.offerToTank).Methods("POST")
 	r.HandleFunc("/api/tanks/{id}/connect", p.clientToTanksWS).Methods("GET")
 
 	r.HandleFunc("/api/connect", p.handleConnect).Methods("GET")
@@ -109,6 +111,29 @@ func (p *PitankServer) getTank(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (p *PitankServer) offerToTank(w http.ResponseWriter, r *http.Request) {
+	id := getStringVar(r, "id")
+	if id == nil {
+		http.Error(w, "id is not passed", http.StatusBadRequest)
+		return
+	}
+
+	tank, exist := p.Tanks[*id]
+	if !exist {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	offer, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Can't read body", http.StatusBadRequest)
+		return
+	}
+
+	cmd := Command{Offer: string(offer)}
+	tank.SendCommand(cmd)
+}
+
 // clientToTanksWS establishes websocket connection from the client to the tank (via server)
 func (p *PitankServer) clientToTanksWS(w http.ResponseWriter, r *http.Request) {
 	id := getStringVar(r, "id")
@@ -134,12 +159,14 @@ func (p *PitankServer) clientToTanksWS(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		// write offer to the channel on init
-		cmd := Command{Offer: tank.Offer}
-		err = conn.WriteJSON(cmd)
-		if err != nil {
-			fmt.Println("Error on sending tank info")
-			//return
-		}
+		/*
+			cmd := Command{Offer: tank.Offer}
+			err = conn.WriteJSON(cmd)
+			if err != nil {
+				fmt.Println("Error on sending tank info")
+				//return
+			}
+		*/
 
 		ticker := time.NewTicker(time.Second)
 		for {
