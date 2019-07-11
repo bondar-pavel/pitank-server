@@ -51,33 +51,33 @@ pc.onicecandidate = event => {
     }
 }
 
-pc.onnegotiationneeded = e => pc.createOffer().then(d => pc.setLocalDescription(d)).catch(log);
+pc.onnegotiationneeded = e => {
+    console.log("Starting offer generation");
+    pc.createOffer().then(d => pc.setLocalDescription(d)).catch(warn);
+}
+
+let dc = pc.createDataChannel('commands');
 
 let send_actions_webrts;
 
-pc.ondatachannel = e => {
-    let dc = e.channel
-    warn('New DataChannel ' + dc.label)
-    dc.onclose = () => {
-        console.log('dc has closed');
-        send_actions_webrts = nil;
-    }
-    dc.onopen = () => {
-        console.log('dc has opened');
-        send_actions_webrts = () => {
-            let stop_now = actions.length == 0;
-            if (!(stop_now && stopped)) {
-                console.log("Sending commands via WebRTC channel");
-                dc.send(JSON.stringify(get_commands(actions)));
-            }
-            stopped = stop_now;
-        }
-    }
-    dc.onmessage = e => warn(`Message from DataChannel '${dc.label}' payload '${e.data}'`)
-
-    dc.send("Connection established!");
-
+warn('New DataChannel ' + dc.label)
+dc.onclose = () => {
+    console.log('dc has closed');
+    send_actions_webrts = nil;
 }
+dc.onopen = () => {
+    console.log('dc has opened');
+    send_actions_webrts = () => {
+        let stop_now = actions.length == 0;
+        if (!(stop_now && stopped)) {
+            console.log("Sending commands via WebRTC channel");
+            dc.send(JSON.stringify(get_commands(actions)));
+        }
+        stopped = stop_now;
+    }
+}
+dc.onmessage = e => warn(`Message from DataChannel '${dc.label}' payload '${e.data}'`)
+//dc.send("Connection established!");
 
 // Converts list of actions to command for the server
 function get_commands(actions) {
