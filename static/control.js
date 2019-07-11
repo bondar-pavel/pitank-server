@@ -92,7 +92,7 @@ dc.onmessage = e => {
 // Converts list of actions to command for the server
 function get_commands(actions) {
     if (actions.length == 0) {
-        return { commands: "stop" };
+        return { commands: "stop", time: Date.now() };
     }
 
     // use dict for commands to make sure each command appears only once
