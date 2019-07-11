@@ -46,7 +46,6 @@ pc.onicecandidate = event => {
             return response.text();
         }).then(data => {
             console.log("Returned answer: ", data);
-            pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(data))));
         }).catch(warn);
     }
 }
@@ -145,14 +144,11 @@ function send_actions_websocket() {
                     console.log('Round trip time ' + latency + " ms");
                     info('Round trip time ' + latency + " ms");
                 }
-                /*
-                if (data.offer) {
-                    // Initialize webrtc connection with remote offer
-                    console.log("Received remote offer:" + offer);
-                    pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(data.offer)))).catch(warn)
-                    pc.createAnswer().then(d => pc.setLocalDescription(d)).catch(warn)
+                if (data.answer) {
+                    // Finish webrtc connection init with remote answer
+                    console.log("Received remote answer:" + data.answer);
+                    pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(data.answer)))).catch(warn);
                 }
-                */
             } catch (err) {
                 debug('WebSocket: message ' + e.data);
             }
