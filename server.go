@@ -158,16 +158,6 @@ func (p *PitankServer) clientToTanksWS(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	go func() {
-		// write offer to the channel on init
-		/*
-			cmd := Command{Offer: tank.Offer}
-			err = conn.WriteJSON(cmd)
-			if err != nil {
-				fmt.Println("Error on sending tank info")
-				//return
-			}
-		*/
-
 		ticker := time.NewTicker(time.Second)
 		for {
 			select {
@@ -254,9 +244,6 @@ func (p *PitankServer) handleConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pitank.Connect(conn)
-
-	// send pitank info (for debug)
-	//pitank.SendCommand(pitank)
 
 	// serve writes from command chan to websocket in gorouting
 	go pitank.WritePump()

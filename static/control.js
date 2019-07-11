@@ -75,7 +75,18 @@ dc.onopen = () => {
         stopped = stop_now;
     }
 }
-dc.onmessage = e => warn(`Message from DataChannel '${dc.label}' payload '${e.data}'`)
+dc.onmessage = e => {
+    try {
+        var data = JSON.parse(e.data);
+        if (data.time) {
+            latency = Date.now() - data.time;
+            console.log('Round trip time ' + latency + " ms");
+            info('Round trip time ' + latency + " ms");
+        }
+    } catch (err) {
+        debug('WebRTC: message ' + e.data);
+    }
+}
 //dc.send("Connection established!");
 
 // Converts list of actions to command for the server
@@ -151,15 +162,6 @@ function send_actions_websocket() {
                 }
             } catch (err) {
                 debug('WebSocket: message ' + e.data);
-            }
-
-            // send localDescription if we have one
-            if (localDescription != "" && !localDescriptionSent) {
-                localDescriptionSent = true;
-                console.log("Sending localDescription: " + localDescription);
-                socket.send(JSON.stringify({
-                    answer: localDescription
-                }));
             }
         }
         socket.onerror = function (e) {
