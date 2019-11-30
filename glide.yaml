@@ -1,6 +1,0 @@
-package: .
-import:
-- package: github.com/gorilla/mux
-  version: ^1.6.2
-- package: github.com/gorilla/websocket
-  version: ^1.4.0

@@ -1,12 +1,11 @@
-FROM golang:1.10-alpine
+FROM golang:1.13-alpine
 
 RUN apk add --no-cache git libgit2-dev alpine-sdk
-RUN go get github.com/Masterminds/glide
 
 WORKDIR /go/src/github.com/bondar-pavel/pitank-server
 
-COPY ./glide.* ./
-RUN glide install --skip-test -v
+COPY ./go.* ./
+RUN go mod download
 
 COPY ./*.go ./
 
