@@ -40,11 +40,13 @@ func (p *PitankServer) Serve() {
 
 	r := mux.NewRouter().StrictSlash(true)
 
+	// Public facing api
 	r.HandleFunc("/api/tanks", p.listTanks).Methods("GET")
 	r.HandleFunc("/api/tanks/{id}", p.getTank).Methods("GET")
 	r.HandleFunc("/api/tanks/{id}/offer", p.offerToTank).Methods("POST")
 	r.HandleFunc("/api/tanks/{id}/connect", p.clientToTanksWS).Methods("GET")
 
+	// API for connecting pitank to server via WebSocket
 	r.HandleFunc("/api/connect", p.handleConnect).Methods("GET")
 	r.HandleFunc("/api/connect/{name}", p.handleConnect).Methods("GET")
 
