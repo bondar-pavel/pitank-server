@@ -85,6 +85,11 @@
 						<button onclick="view('program')">Switch to Program View</button>
 					</td>
 				</tr>
+				<tr>
+					<td colspan='3'>
+						<button id='camera_start' onmousedown="button(this, true)" onmouseup="button(this, false)">Start camera</button>
+					</td>
+				</tr>
 			</table>
 			<form id='program' method='POST' action='/' style='display: none'>
 				Programming RPI-TANK<br/>

@@ -25,6 +25,7 @@ var action_to_track = {
     'engine_right': ['trackleft_forward'],
     'engine_left': ['trackright_forward'],
     'engine_reverse': ['trackleft_reverse', 'trackright_reverse'],
+    'camera_start': ['camera_start'],
 }
 
 // Init WebRTC
