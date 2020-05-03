@@ -98,9 +98,7 @@ dc.onmessage = e => {
     try {
         var data = JSON.parse(e.data);
         if (data.time) {
-            latency = Date.now() - data.time;
-            console.log('Round trip time ' + latency + " ms");
-            info('Round trip time ' + latency + " ms");
+            updateRoundTripTime(data.time);
         }
     } catch (err) {
         debug('WebRTC: message ' + e.data);
@@ -175,9 +173,7 @@ function send_actions_websocket() {
             try {
                 var data = JSON.parse(e.data);
                 if (data.time) {
-                    latency = Date.now() - data.time;
-                    console.log('Round trip time ' + latency + " ms");
-                    info('Round trip time ' + latency + " ms");
+                    updateRoundTripTime(data.time);
                 }
                 if (data.answer) {
                     // Finish webrtc connection init with remote answer
@@ -217,6 +213,24 @@ view(false);
 setInterval(function () {
     send_actions(actions);
 }, 500);
+
+function updateRoundTripTime(time) {
+    latency = Date.now() - time;
+
+    let roundTripTime = document.getElementById('round_trip_time');
+    roundTripTime.innerText = latency + " ms";
+
+    // update rtt indicator color,
+    // for now just reuse existent classes for colors green/yellow/red
+    let roundTripDot = document.getElementById('round_trip');
+    if (latency < 50) {
+        roundTripDot.className = "dot connected";
+    } else if (latency < 500) {
+        roundTripDot.className = "dot connecting";
+    } else {
+        roundTripDot.className = "dot disconnected";
+    }
+}
 
 function warn(text) {
     console.log(text)
