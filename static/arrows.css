@@ -4,6 +4,29 @@
 	cursor: pointer;
 }
 
+.dot {
+	height: 10px;
+	width: 10px;
+	border-radius: 50%;
+	display: inline-block;
+}
+
+.dot.inactive {
+	background-color: #bbb;
+}
+
+.dot.connecting {
+	background-color: #ff0;
+}
+
+.dot.connected {
+	background-color: green;
+}
+
+.dot.disconnected {
+	background-color: red;
+}
+
 .engine_left.active {
 	background: url(/static/arrows/orange-left.png);
 }

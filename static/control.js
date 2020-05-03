@@ -28,15 +28,32 @@ var action_to_track = {
     'camera_start': ['camera_start'],
 }
 
+
+let webrtcDot = document.getElementById('webrtc');
 // Init WebRTC
 let pc = new RTCPeerConnection({
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 })
 
-pc.onsignalingstatechange = e => warn(pc.signalingState)
-pc.oniceconnectionstatechange = e => warn(pc.iceConnectionState)
+pc.onsignalingstatechange = e => {
+    warn("Signaling state change: " + pc.signalingState);
+}
+pc.oniceconnectionstatechange = e => {
+    switch(pc.iceConnectionState) {
+        case "connected":
+            webrtcDot.className = "dot connected";
+            break;
+        case "disconnected":
+            webrtcDot.className = "dot disconnected";
+          break;
+    }
+
+    warn("ICE state change:" + pc.iceConnectionState);
+}
 pc.onicecandidate = event => {
     warn("Generating localDescription");
+    webrtcDot.className = "dot connecting";
+
     if (event.candidate === null) {
         warn("Generating localDescription done");
         // send Offer to tank
@@ -67,6 +84,7 @@ dc.onclose = () => {
 }
 dc.onopen = () => {
     console.log('dc has opened');
+
     send_actions_webrts = () => {
         let stop_now = actions.length == 0;
         if (!(stop_now && stopped)) {
@@ -128,6 +146,7 @@ function send_actions() {
 }
 
 function send_actions_websocket() {
+    let wsDot = document.getElementById('websocket');
     if (socket) {
         var stop_now = actions.length == 0;
         if (!(stop_now && stopped)) {
@@ -136,17 +155,21 @@ function send_actions_websocket() {
         stopped = stop_now;
     } else {
         warn('connecting...');
+        wsDot.className = "dot connecting";
+
         localDescriptionSent = false;
         socket = new WebSocket('ws://' + location.host + '/api/tanks/' + tankName + '/connect');
 
         socket.onopen = function (e) {
             warn(null);
             console.log('WebSocket: opened');
+            wsDot.className = "dot connected";
             send_actions();
         }
         socket.onclose = function (e) {
             socket = null;
             warn('WebSocket: closed (' + e.code + ')');
+            wsDot.className = "dot disconnected";
         }
         socket.onmessage = function (e) {
             try {
