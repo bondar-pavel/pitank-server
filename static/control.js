@@ -14,6 +14,9 @@ var program = false;
 // LocalDescription for WebRTC connection
 var localDescription = "";
 var localDescriptionSent = false;
+// variables for tracking communication channel states
+var WebsocketOpened = false;
+var WebRTCOpened = false;
 
 const urlParams = new URLSearchParams(window.location.search);
 const tankName = urlParams.get('name') || 'pitank';
@@ -28,8 +31,6 @@ var action_to_track = {
     'camera_start': ['camera_start'],
 }
 
-
-let webrtcDot = document.getElementById('webrtc');
 // Init WebRTC
 let pc = new RTCPeerConnection({
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
@@ -41,18 +42,18 @@ pc.onsignalingstatechange = e => {
 pc.oniceconnectionstatechange = e => {
     switch(pc.iceConnectionState) {
         case "connected":
-            webrtcDot.className = "dot connected";
+            setWebRTCStatus("connected");
             break;
         case "disconnected":
-            webrtcDot.className = "dot disconnected";
-          break;
+            setWebRTCStatus(false);
+            break;
     }
 
     warn("ICE state change:" + pc.iceConnectionState);
 }
 pc.onicecandidate = event => {
     warn("Generating localDescription");
-    webrtcDot.className = "dot connecting";
+    setWebRTCStatus("connecting");
 
     if (event.candidate === null) {
         warn("Generating localDescription done");
@@ -80,7 +81,6 @@ let send_actions_webrts;
 warn('New DataChannel ' + dc.label)
 dc.onclose = () => {
     console.log('dc has closed');
-    send_actions_webrts = nil;
 }
 dc.onopen = () => {
     console.log('dc has opened');
@@ -136,7 +136,7 @@ function get_commands(actions) {
 // Send 'actions' to 'socket', with reconnect availability.
 function send_actions() {
     // Send commands via webrtc channel if available
-    if (send_actions_webrts) {
+    if (WebRTCOpened) {
         send_actions_webrts();
     } else {
         send_actions_websocket()
@@ -144,7 +144,6 @@ function send_actions() {
 }
 
 function send_actions_websocket() {
-    let wsDot = document.getElementById('websocket');
     if (socket) {
         var stop_now = actions.length == 0;
         if (!(stop_now && stopped)) {
@@ -153,7 +152,7 @@ function send_actions_websocket() {
         stopped = stop_now;
     } else {
         warn('connecting...');
-        wsDot.className = "dot connecting";
+        setWebsocketStatus("connecting");
 
         localDescriptionSent = false;
         socket = new WebSocket('ws://' + location.host + '/api/tanks/' + tankName + '/connect');
@@ -161,13 +160,13 @@ function send_actions_websocket() {
         socket.onopen = function (e) {
             warn(null);
             console.log('WebSocket: opened');
-            wsDot.className = "dot connected";
+            setWebsocketStatus("connected");
             send_actions();
         }
         socket.onclose = function (e) {
             socket = null;
             warn('WebSocket: closed (' + e.code + ')');
-            wsDot.className = "dot disconnected";
+            setWebsocketStatus(false);
         }
         socket.onmessage = function (e) {
             try {
@@ -213,6 +212,54 @@ view(false);
 setInterval(function () {
     send_actions(actions);
 }, 500);
+
+function setWebRTCStatus(status) {
+    let webrtcDot = document.getElementById('webrtc');
+
+    if (status == "connected") {
+        webrtcDot.className = "dot connected";
+        WebRTCOpened = true;
+    } else if (status == "connecting") {
+        webrtcDot.className = "dot connecting";
+        WebRTCOpened = false;
+    } else {
+        webrtcDot.className = "dot disconnected";
+        WebRTCOpened = false;
+    }
+
+    updateCommunicationChannelStatus();
+}
+
+function setWebsocketStatus(status) {
+    let wsDot = document.getElementById('websocket');
+
+    if (status == "connected") {
+        wsDot.className = "dot connected";
+        WebsocketOpened = true;
+    } else if (status == "connecting") {
+        wsDot.className = "dot connecting";
+        WebsocketOpened = false;
+    } else {
+        wsDot.className = "dot disconnected";
+        WebsocketOpened = false;
+    }
+
+    updateCommunicationChannelStatus();
+}
+
+// updateCommunicationChannelStatus updates status of communication channel currently in use
+function updateCommunicationChannelStatus() {
+    let commandChannelDot = document.getElementById('command_channel');
+    let commandChannelName = document.getElementById('command_channel_name');
+
+    if (!WebRTCOpened && !WebsocketOpened) {
+        commandChannelDot.className = "dot disconnected";
+        commandChannelName.innerText = "None";
+    } else {
+        commandChannelDot.className = "dot connected";
+        commandChannelName.innerText = WebRTCOpened ? "WebRTC" : "Websocket";
+    }
+}
 
 function updateRoundTripTime(time) {
     latency = Date.now() - time;
