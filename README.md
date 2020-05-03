@@ -127,3 +127,10 @@ Proposed WebRTC flow:
 11. Webrtc connection is started
 12. Client can send commands directly to tank over WebRTC channel
 13. If WebRTC channel failed, then fallback to Websocket
+
+# History
+
+## 0.1.0
+
+- Implemented WebRTC flow on both sides: pitank-client and pitank-server
+- Added status icons for WebRTC/websocket connection on tank control page
