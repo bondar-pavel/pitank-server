@@ -99,7 +99,7 @@ Example of data received by tank from server:
 {"commands": "engine_right engine_forward tower_right"}
 ```
 
-## Improvement Proposal 1: Use WebRTS for client-tank communication
+## Improvement Proposal 1: Use WebRTS for client-tank communication (STATUS: implemented in v0.1.0)
 
 Currently both client and tank are connected via Websocket to the server,
 and server forwards commands from Client to Tank.
@@ -127,6 +127,25 @@ Proposed WebRTC flow:
 11. Webrtc connection is started
 12. Client can send commands directly to tank over WebRTC channel
 13. If WebRTC channel failed, then fallback to Websocket
+
+## Improvement Proposal 2: Use Firestore as main communication media between tank, clients and server (STATUS: In design)
+
+Current approach of communication between tank and clients relies heavily on a server as a central point, which always
+keeps Websocket opened for connected parties.
+
+Downsides of this approach are next:
+- server contains state, so it is not horizontally scalable, and on restart state is lost;
+- server can not be deployed on AppEngine (because of Websockets and state);
+
+Switching to Firestore allows to redesing pitank-server in
+cloud-native way to reduces role of the server, since many of it's functions are transferred to Firestore.
+
+Additional benefits of switching to Firestore is an easisy way to add user authentication, which was in TODO list for quite a while.
+
+Implemenentation of WebRTC for pitank to client communication,
+allowed to reduce role of Websockets as a media for transferring realtime commands. This allows to replace Websockets with Firebase to configuraton data (WebRTC offer exchange) and WebRTC for realtime, low-delay commands.
+
+TODO: Detailed desing
 
 # History
 
