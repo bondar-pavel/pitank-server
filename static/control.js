@@ -214,7 +214,7 @@ setInterval(function () {
 }, 500);
 
 function setWebRTCStatus(status) {
-    let webrtcDot = document.getElementById('webrtc');
+    const webrtcDot = document.getElementById('webrtc');
 
     if (status == "connected") {
         webrtcDot.className = "dot connected";
@@ -231,7 +231,7 @@ function setWebRTCStatus(status) {
 }
 
 function setWebsocketStatus(status) {
-    let wsDot = document.getElementById('websocket');
+    const wsDot = document.getElementById('websocket');
 
     if (status == "connected") {
         wsDot.className = "dot connected";
@@ -249,8 +249,8 @@ function setWebsocketStatus(status) {
 
 // updateCommunicationChannelStatus updates status of communication channel currently in use
 function updateCommunicationChannelStatus() {
-    let commandChannelDot = document.getElementById('command_channel');
-    let commandChannelName = document.getElementById('command_channel_name');
+    const commandChannelDot = document.getElementById('command_channel');
+    const commandChannelName = document.getElementById('command_channel_name');
 
     if (!WebRTCOpened && !WebsocketOpened) {
         commandChannelDot.className = "dot disconnected";
@@ -262,14 +262,14 @@ function updateCommunicationChannelStatus() {
 }
 
 function updateRoundTripTime(time) {
-    latency = Date.now() - time;
+    const latency = Date.now() - time;
 
-    let roundTripTime = document.getElementById('round_trip_time');
+    const roundTripTime = document.getElementById('round_trip_time');
     roundTripTime.innerText = latency + " ms";
 
     // update rtt indicator color,
     // for now just reuse existent classes for colors green/yellow/red
-    let roundTripDot = document.getElementById('round_trip');
+    const roundTripDot = document.getElementById('round_trip');
     if (latency < 50) {
         roundTripDot.className = "dot connected";
     } else if (latency < 500) {
