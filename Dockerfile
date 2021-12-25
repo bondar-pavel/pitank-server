@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine
+FROM golang:1.16-alpine
 
 RUN apk add --no-cache git libgit2-dev alpine-sdk
 
@@ -7,9 +7,10 @@ WORKDIR /go/src/github.com/bondar-pavel/pitank-server
 COPY ./go.* ./
 RUN go mod download
 
-COPY ./*.go ./
+COPY ./pkg ./pkg
+COPY ./cmd ./cmd
 
-RUN CGO_ENABLED=1 GOOS=linux go install -a -ldflags '-extldflags "-static"' .
+RUN CGO_ENABLED=1 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o ./bin/pitank-server ./cmd/main.go
 
 FROM alpine:latest
 
@@ -21,5 +22,5 @@ WORKDIR /root
 COPY ./static ./static
 COPY ./templates ./templates
 
-COPY --from=0 /go/bin/pitank-server /root/pitank-server
+COPY --from=0 /go/src/github.com/bondar-pavel/pitank-server/bin/pitank-server /root/pitank-server
 CMD ["/root/pitank-server", "--port", "80"]

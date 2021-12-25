@@ -1,6 +1,6 @@
 IMAGE_NAME=pitank-server
 REGISTRY=pbondar
-VERSION=0.1.0
+VERSION=0.2.0
 
 image:
 	docker build -t $(REGISTRY)/$(IMAGE_NAME):$(VERSION) .
@@ -9,7 +9,7 @@ push:
 	docker push $(REGISTRY)/$(IMAGE_NAME):$(VERSION)
 
 build:
-	go build -o pitank_server
+	go build -o ./bin/pitank_server cmd/main.go
 
 fmt:
-	gofmt -w *.go
+	gofmt -w cmd pkg
